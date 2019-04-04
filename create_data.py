@@ -2,6 +2,7 @@ import argparse
 import random
 import sys
 import numpy as np
+import gc
 import matplotlib.pyplot as plt
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
@@ -99,6 +100,7 @@ def main():
 	np.save(saved_labels_path, labels)
 	labels = None
 	features = None
+	gc.collect()
 	
 	if show_preview:
 		loaded_features = np.load(saved_features_path + ".npy")

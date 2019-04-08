@@ -27,7 +27,7 @@ def main():
 
 	cp_callback = tf.keras.callbacks.ModelCheckpoint(
 		checkpoint_path, verbose = 1, save_weights_only = True,
-		period = 5)
+		period = 100)
 
 	model = create_model()
 	history = model.fit(features_train, labels_train, epochs = 100,
@@ -41,10 +41,13 @@ def main():
 
 	fig, axs = plt.subplot(1,3,1), plt.imshow(test)
 	fig.axis('off')
-	fig.set_title('Feature')
-	fig, axs = plt.subplot(1,3,2), plt.imshow(prediction[0])
+	fig.set_title('Map')
+	fig, axs = plt.subplot(1,3,2), plt.imshow(np.array(prediction[0]).reshape(11, 11))
 	fig.axis('off')
-	fig.set_title('Prediction')
+	fig.set_title('Predicted path')
+	fig, axs = plt.subplot(1,3,3), plt.imshow(np.around(np.array(lables_test[0]).reshape(11, 11), decimals=1))
+	fig.axis('off')
+	fig.set_title('Desired path')
 	plt.show()
 
 if __name__ == '__main__':

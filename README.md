@@ -1,4 +1,4 @@
 # NNPathfinder
 An experimental solution based on Neural Network for pathfinding.
 
-![Alt Text](http://i67.tinypic.com/if1ueo.gif)
+![Alt Text](http://tinypic.com/view.php?pic=54ge1g&s=9#.XKtRn-iTKUk)

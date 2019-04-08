@@ -9,7 +9,7 @@ from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 
 from mazegen import maze
-from data_loader import load_1D
+from data_loader import load_3D
 
 def create_map(sizeX, sizeY, random_position = False):
 	out_maze = maze(sizeX - 1, sizeY - 1)
@@ -104,7 +104,7 @@ def main():
 	gc.collect()
 	
 	if show_preview:
-		loaded_features, loaded_labels = load_1D(count, map_X, map_Y)
+		loaded_features, loaded_labels = load_3D(count, map_X, map_Y)
 		
 		fig, axs = plt.subplot(1,3,1), plt.imshow(loaded_features[0])
 		fig.axis('off')

@@ -7,9 +7,30 @@ import matplotlib.pyplot as plt
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+from time import sleep
 
 from mazegen import maze
 from data_loader import load_3D
+
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+	"""
+	Call in a loop to create terminal progress bar
+	@params:
+		iteration   - Required  : current iteration (Int)
+		total       - Required  : total iterations (Int)
+		prefix      - Optional  : prefix string (Str)
+		suffix      - Optional  : suffix string (Str)
+		decimals    - Optional  : positive number of decimals in percent complete (Int)
+		length      - Optional  : character length of bar (Int)
+		fill        - Optional  : bar fill character (Str)
+	"""
+	percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+	filledLength = int(length * iteration // total)
+	bar = fill * filledLength + '-' * (length - filledLength)
+	print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+	# Print New Line on Complete
+	if iteration == total: 
+		print()
 
 def create_map(sizeX, sizeY, random_position = False):
 	out_maze = maze(sizeX - 1, sizeY - 1)
@@ -18,8 +39,8 @@ def create_map(sizeX, sizeY, random_position = False):
 	new_maze *= -1
 	
 	grid = Grid(matrix=new_maze)
-	start = grid.node(1, 1)
-	end = grid.node(sizeX - 2, sizeY - 2)
+	start = grid.node(3, 3)
+	end = grid.node(sizeX - 4, sizeY - 4)
 
 	if random_position: 
 		result = np.where(new_maze == 1)
@@ -42,8 +63,8 @@ def create_map(sizeX, sizeY, random_position = False):
 		new_maze[startArr[1], startArr[0]] = 3
 		new_maze[endArr[1], endArr[0]] = 4
 	else:
-		new_maze[1][1] = 3
-		new_maze[sizeX - 2][sizeY - 2] = 4
+		new_maze[3][3] = 3
+		new_maze[sizeX - 4][sizeY - 4] = 4
 		
 	#print(grid.grid_str(path=path, start=start, end=end))
 	return new_maze, path_array
@@ -85,12 +106,14 @@ def main():
 		print("erring in args, type -h for more info")
 		sys.exit()
 	
+	printProgressBar(0, count, prefix = 'Progress:', suffix = 'Complete', length = 50)
 	features = []
 	labels = []
 	for x in range(count):
 		new_maze, path = create_map(map_X, map_Y, use_rnd)
 		features.append(new_maze)
 		labels.append(path)
+		printProgressBar(x + 1, count, prefix = 'Progress:', suffix = 'Complete', length = 50)
 	
 	features = np.array(features).flatten()
 	labels = np.array(labels).flatten()

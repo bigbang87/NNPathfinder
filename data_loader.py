@@ -16,3 +16,9 @@ def load_2D(count, mapX, mapY, name = "created_data_"):
 	loaded_features = np.array(loaded_features).reshape(count, mapX * mapY)
 	loaded_labels = np.array(loaded_labels).reshape(count, mapX * mapY)
 	return loaded_features, loaded_labels
+	
+def load_matplotlib(count, mapX, mapY, name = "created_data_"):
+	loaded_features, loaded_labels = load_npy(name)
+	loaded_features = np.array(loaded_features).reshape(count, mapX, mapY)
+	loaded_labels = np.array(loaded_labels).reshape(count, mapX, mapY)
+	return loaded_features, loaded_labels

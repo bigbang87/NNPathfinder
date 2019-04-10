@@ -10,9 +10,12 @@ from pathfinding.finder.a_star import AStarFinder
 from time import sleep
 
 from mazegen import maze
-from data_loader import load_3D
+from data_loader import load_matplotlib
 
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+def filterout_nopath(map):
+	return bool(np.sum(map))
+
+def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	"""
 	Call in a loop to create terminal progress bar
 	@params:
@@ -109,11 +112,12 @@ def main():
 	printProgressBar(0, count, prefix = 'Progress:', suffix = 'Complete', length = 50)
 	features = []
 	labels = []
-	for x in range(count):
+	while len(features) < count:
 		new_maze, path = create_map(map_X, map_Y, use_rnd)
-		features.append(new_maze)
-		labels.append(path)
-		printProgressBar(x + 1, count, prefix = 'Progress:', suffix = 'Complete', length = 50)
+		if bool(np.sum(path)):
+			features.append(new_maze)
+			labels.append(path)
+			printProgressBar(len(features), count, prefix = 'Progress:', suffix = 'Complete', length = 50)
 	
 	features = np.array(features).flatten()
 	labels = np.array(labels).flatten()
@@ -127,7 +131,7 @@ def main():
 	gc.collect()
 	
 	if show_preview:
-		loaded_features, loaded_labels = load_3D(count, map_X, map_Y)
+		loaded_features, loaded_labels = load_matplotlib(count, map_X, map_Y)
 		
 		fig, axs = plt.subplot(1,3,1), plt.imshow(loaded_features[0])
 		fig.axis('off')

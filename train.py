@@ -24,13 +24,14 @@ def main():
 	
 	checkpoint_path = "checkpoints/cp-{epoch:04d}.ckpt"
 	checkpoint_dir = os.path.dirname(checkpoint_path)
-
+	latest = tf.train.latest_checkpoint(checkpoint_dir)
 	cp_callback = tf.keras.callbacks.ModelCheckpoint(
 		checkpoint_path, verbose = 1, save_weights_only = True,
 		period = 100)
 
 	model = create_model()
-	history = model.fit(features_train, labels_train, epochs = 1000,
+	model.load_weights(latest)
+	model.fit(features_train, labels_train, epochs = 1000,
 		callbacks = [cp_callback],
 		validation_data = (features_train, labels_train)
 	)

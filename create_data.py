@@ -12,8 +12,40 @@ from time import sleep
 from mazegen import maze
 from data_loader import load_matplotlib
 
-def filterout_nopath(map):
-	return bool(np.sum(map))
+def clamp(value, min, max):
+	if value < min:
+		return min
+	elif value > max:
+		return max
+	return value
+	
+def get_maze(size, use_random = False):
+	out_maze = maze(size + 3, size + 3)
+	resized_maze = out_maze[2:-2, 2:-2]
+
+	rnd_index_XA = np.random.randint(0, resized_maze.shape[0])
+	rnd_index_YA = np.random.randint(0, resized_maze.shape[1])
+	rnd_index_XB = np.random.randint(0, resized_maze.shape[0])
+	rnd_index_YB = np.random.randint(0, resized_maze.shape[1])
+
+	XA_1 = clamp(rnd_index_XA - 1, 0, resized_maze.shape[0])
+	XA_2 = clamp(rnd_index_XA + 2, 0, resized_maze.shape[1])
+	YA_1 = clamp(rnd_index_YA - 1, 0, resized_maze.shape[0])
+	YA_2 = clamp(rnd_index_YA + 2, 0, resized_maze.shape[1])
+
+	XB_1 = clamp(rnd_index_XB - 1, 0, resized_maze.shape[0])
+	XB_2 = clamp(rnd_index_XB + 2, 0, resized_maze.shape[1])
+	YB_1 = clamp(rnd_index_YB - 1, 0, resized_maze.shape[0])
+	YB_2 = clamp(rnd_index_YB + 2, 0, resized_maze.shape[1])
+	
+	resized_maze[XA_1:XA_2,	YA_1:YA_2] = 0
+	resized_maze[XB_1:XB_2,	YB_1:YB_2] = 0
+	resized_maze[rnd_index_XA, rnd_index_YA] = 2
+	resized_maze[rnd_index_XB, rnd_index_YB] = 3
+	
+	start = [rnd_index_XA, rnd_index_YA]
+	end = [rnd_index_XB, rnd_index_YB]
+	return start, end, resized_maze
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	"""
@@ -35,15 +67,15 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
 	if iteration == total: 
 		print()
 
-def create_map(sizeX, sizeY, random_position = False):
-	out_maze = maze(sizeX - 1, sizeY - 1)
+def create_map(size, random_position = False):
+	out_maze = maze(size - 1, size - 1)
 	new_maze = np.array(out_maze.astype(int))
 	new_maze -= 1
 	new_maze *= -1
 	
 	grid = Grid(matrix=new_maze)
 	start = grid.node(3, 3)
-	end = grid.node(sizeX - 4, sizeY - 4)
+	end = grid.node(size - 4, size - 4)
 
 	if random_position: 
 		result = np.where(new_maze == 1)
@@ -58,7 +90,7 @@ def create_map(sizeX, sizeY, random_position = False):
 	finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 	path, runs = finder.find_path(start, end, grid)
 	
-	path_array = np.zeros((sizeY, sizeX), dtype=int)
+	path_array = np.zeros((size, size), dtype=int)
 	for x in range(len(path)):
 		path_array[path[x][1], path[x][0]] = 1
 	
@@ -67,7 +99,7 @@ def create_map(sizeX, sizeY, random_position = False):
 		new_maze[endArr[1], endArr[0]] = 4
 	else:
 		new_maze[3][3] = 3
-		new_maze[sizeX - 4][sizeY - 4] = 4
+		new_maze[size - 4][size - 4] = 4
 		
 	#print(grid.grid_str(path=path, start=start, end=end))
 	return new_maze, path_array
@@ -75,20 +107,17 @@ def create_map(sizeX, sizeY, random_position = False):
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("maps_count", help="the number of how many maps will be generated", type=int)
-	parser.add_argument("-x", "--map_size_X", help="the size of each map, only uneven (odd) values", type=int)
-	parser.add_argument("-y", "--map_size_Y", help="the size of each map, only uneven (odd) values", type=int)
+	parser.add_argument("-s", "--map_size", help="the size of a map, only uneven (odd) values", type=int)
 	parser.add_argument("-r", "--use_random", help="use randomly generated start and end positions", type=bool)
 	parser.add_argument("-f", "--file_name", help="path/name for the output file", type=str)
 	parser.add_argument("-i", "--show_preview", help="load and show debug preview of generated data after saving it", type=str)
 	args = parser.parse_args()
 	count = args.maps_count
-	map_X = 11
-	map_Y = 11
+	size = 11
 	use_rnd = False
 	file_name = "created_data_"
 	show_preview = True
-	if args.map_size_X != None : map_X = args.map_size_X
-	if args.map_size_Y != None : map_Y = args.map_size_Y
+	if args.map_size != None : size = args.map_size
 	if args.use_random == None:
 		use_rnd = False
 	elif args.use_random == "True":
@@ -113,12 +142,13 @@ def main():
 	features = []
 	labels = []
 	while len(features) < count:
-		new_maze, path = create_map(map_X, map_Y, use_rnd)
+		new_maze, path = create_map(size, use_rnd)
 		if bool(np.sum(path)):
 			features.append(new_maze)
 			labels.append(path)
 			printProgressBar(len(features), count, prefix = 'Progress:', suffix = 'Complete', length = 50)
-	
+			
+	print(np.array(features).shape)
 	features = np.array(features).flatten()
 	labels = np.array(labels).flatten()
 	
@@ -131,7 +161,7 @@ def main():
 	gc.collect()
 	
 	if show_preview:
-		loaded_features, loaded_labels = load_matplotlib(count, map_X, map_Y)
+		loaded_features, loaded_labels = load_matplotlib(count, size, size)
 		
 		fig, axs = plt.subplot(1,3,1), plt.imshow(loaded_features[0])
 		fig.axis('off')

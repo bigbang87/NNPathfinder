@@ -21,12 +21,21 @@ def clamp(value, min, max):
 	
 def get_maze(size, use_random = False):
 	out_maze = maze(size + 3, size + 3)
+	out_maze = np.array(out_maze.astype(int))
+	out_maze -= 1
+	out_maze *= -1
 	resized_maze = out_maze[2:-2, 2:-2]
 
-	rnd_index_XA = np.random.randint(0, resized_maze.shape[0])
-	rnd_index_YA = np.random.randint(0, resized_maze.shape[1])
-	rnd_index_XB = np.random.randint(0, resized_maze.shape[0])
-	rnd_index_YB = np.random.randint(0, resized_maze.shape[1])
+	rnd_index_XA = 0
+	rnd_index_YA = 0
+	rnd_index_XB = resized_maze.shape[0] - 1
+	rnd_index_YB = resized_maze.shape[1] - 1
+	
+	if use_random:
+		rnd_index_XA = np.random.randint(0, resized_maze.shape[0])
+		rnd_index_YA = np.random.randint(0, resized_maze.shape[1])
+		rnd_index_XB = np.random.randint(0, resized_maze.shape[0])
+		rnd_index_YB = np.random.randint(0, resized_maze.shape[1])
 
 	XA_1 = clamp(rnd_index_XA - 1, 0, resized_maze.shape[0])
 	XA_2 = clamp(rnd_index_XA + 2, 0, resized_maze.shape[1])
@@ -38,14 +47,14 @@ def get_maze(size, use_random = False):
 	YB_1 = clamp(rnd_index_YB - 1, 0, resized_maze.shape[0])
 	YB_2 = clamp(rnd_index_YB + 2, 0, resized_maze.shape[1])
 	
-	resized_maze[XA_1:XA_2,	YA_1:YA_2] = 0
-	resized_maze[XB_1:XB_2,	YB_1:YB_2] = 0
+	resized_maze[XA_1:XA_2,	YA_1:YA_2] = 1
+	resized_maze[XB_1:XB_2,	YB_1:YB_2] = 1
 	resized_maze[rnd_index_XA, rnd_index_YA] = 2
 	resized_maze[rnd_index_XB, rnd_index_YB] = 3
 	
 	start = [rnd_index_XA, rnd_index_YA]
 	end = [rnd_index_XB, rnd_index_YB]
-	return start, end, resized_maze
+	return resized_maze, start, end
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	"""
@@ -68,38 +77,18 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
 		print()
 
 def create_map(size, random_position = False):
-	out_maze = maze(size - 1, size - 1)
-	new_maze = np.array(out_maze.astype(int))
-	new_maze -= 1
-	new_maze *= -1
+	new_maze, _start, _end = get_maze(size, random_position)
 	
 	grid = Grid(matrix=new_maze)
-	start = grid.node(3, 3)
-	end = grid.node(size - 4, size - 4)
-
-	if random_position: 
-		result = np.where(new_maze == 1)
-		result = np.asarray(result)
-		rndIndex = random.randint(0, result.shape[1])
-		startArr = np.array([result[0][rndIndex], result[1][rndIndex]])
-		rndIndex = random.randint(0, result.shape[1])
-		endArr = np.array([result[0][rndIndex], result[1][rndIndex]])
-		start = grid.node(startArr[0], startArr[1])
-		end = grid.node(endArr[0], endArr[1])
+	start = grid.node(_start[1], _start[0])
+	end = grid.node(_end[1], _end[0])
 
 	finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 	path, runs = finder.find_path(start, end, grid)
-	
+
 	path_array = np.zeros((size, size), dtype=int)
 	for x in range(len(path)):
 		path_array[path[x][1], path[x][0]] = 1
-	
-	if random_position: 
-		new_maze[startArr[1], startArr[0]] = 3
-		new_maze[endArr[1], endArr[0]] = 4
-	else:
-		new_maze[3][3] = 3
-		new_maze[size - 4][size - 4] = 4
 		
 	#print(grid.grid_str(path=path, start=start, end=end))
 	return new_maze, path_array
@@ -114,12 +103,12 @@ def main():
 	args = parser.parse_args()
 	count = args.maps_count
 	size = 11
-	use_rnd = False
+	use_rnd = True
 	file_name = "created_data_"
 	show_preview = True
 	if args.map_size != None : size = args.map_size
 	if args.use_random == None:
-		use_rnd = False
+		use_rnd = True
 	elif args.use_random == "True":
 		use_rnd = True
 	elif args.use_random == "False":
@@ -147,8 +136,7 @@ def main():
 			features.append(new_maze)
 			labels.append(path)
 			printProgressBar(len(features), count, prefix = 'Progress:', suffix = 'Complete', length = 50)
-			
-	print(np.array(features).shape)
+
 	features = np.array(features).flatten()
 	labels = np.array(labels).flatten()
 	
